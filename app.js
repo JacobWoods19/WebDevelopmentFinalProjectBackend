@@ -17,7 +17,6 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
-
 async function run() {
     try {
       // Connect the client to the server	(optional starting in v4.7)
@@ -193,6 +192,26 @@ app.post('/api/complete_item', async (req, res) => {
         res.status(500).send();
     }
 });
+app.post('/api/uncomplete_item', async (req, res) => {
+    if(req.body.token == null || req.body.item_id == null) {
+        return res.status(401).send();
+    }
+    try {
+        const token = req.body.token;
+        const decoded = jwt.verify(token, jwtSecret);
+        await client.connect();
+        const result = await client.db("main").collection("items").updateOne({user_name: decoded.user_name, item_id: req.body.item_id}, {$set: {completed: false}});
+        if (result == null) {
+            return res.status(500).send();
+        }
+        res.status(200).send();
+    }
+    catch(err) {
+        console.log(err);
+        res.status(500).send();
+    }
+});
+
 
 // run a hoe 
 const PORT = process.env.PORT || 3000;
